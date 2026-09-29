@@ -1,0 +1,333 @@
+<!DOCTYPE html>
+<html lang="bn">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Bismillah Shopping Pro</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
+import { getFirestore, collection, addDoc, getDocs, deleteDoc, doc, setDoc, query, where, updateDoc, orderBy, getDoc } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
+import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword, signOut, onAuthStateChanged, getIdTokenResult, GoogleAuthProvider, signInWithPopup } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
+const firebaseConfig = {
+  apiKey: "AIzaSyBX_pRUbqGszqUyaz5lOq1y4alTnadwlKU",
+  authDomain: "bismillah-70c65.firebaseapp.com",
+  projectId: "bismillah-70c65",
+  storageBucket: "bismillah-70c65.appspot.com",
+  messagingSenderId: "213565987850",
+  appId: "1:213565987850:web:471571028d5330c2f193f3",
+  measurementId: "G-528QTQV4JS"
+};
+try {
+  const app = initializeApp(firebaseConfig);
+  window.db = getFirestore(app);
+  window.auth = getAuth(app);
+  window.googleProvider = new GoogleAuthProvider();
+  window.signInWithPopup = signInWithPopup;
+  window.firebaseEnabled = true;
+  Object.assign(window, { addDoc, collection, getDocs, deleteDoc, doc, setDoc, updateDoc, query, where, orderBy, getDoc, signInWithEmailAndPassword, createUserWithEmailAndPassword, signOut, onAuthStateChanged, getIdTokenResult });
+  window.firebaseReady = Promise.resolve(true);
+} catch (e) {
+  console.error(e);
+  window.firebaseEnabled = false;
+  window.firebaseReady = Promise.resolve(false);
+}
+</script>
+<style>
+.admin-dot{width:28px;height:28px;background:#111;border-radius:50%;display:flex;align-items:center;justify-content:center;color:white;font-size:11px;opacity:.35;position:fixed;top:6px;right:6px;z-index:100}
+.bottom-nav{position:fixed;bottom:0;left:0;right:0;background:white;border-top:1px solid #ddd;display:flex;justify-content:space-around;z-index:50;padding:8px 0}
+.bottom-nav button{flex:1;display:flex;flex-direction:column;align-items:center;font-size:11px}
+body{padding-bottom:135px}button,a{touch-action:manipulation}
+#cartBox{position:fixed;inset:0;z-index:80;margin:0!important;border-radius:0!important;overflow-y:auto;padding:20px;padding-bottom:95px}
+</style>
+</head>
+<body class="bg-gray-50">
+<div onclick="openAdminLogin()" class="admin-dot" title="Admin"><i class="fa fa-lock"></i></div>
+<nav class="bg-green-700 text-white p-3 text-center sticky top-0 z-40"><b>Bismillah Shopping</b> - Dhaka, Gazipur</nav>
+<div id="home" class="max-w-7xl mx-auto p-3">
+  
+  <!-- AdMob Banner Ad 1: ক্যাটাগরি বাটনের উপরে -->
+  <div class="mb-3 text-center bg-white p-1 rounded shadow-sm">
+    <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-app-pub-2093040317984969" crossorigin="anonymous"></script>
+    <ins class="adsbygoogle" style="display:inline-block;width:320px;height:50px" data-ad-client="ca-app-pub-2093040317984969" data-ad-slot="7708006102"></ins>
+    <script>(adsbygoogle = window.adsbygoogle || []).push({});</script>
+  </div>
+
+  <div id="catBtns" class="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-8 gap-2 mb-4"></div>
+  
+  <!-- WhatsApp Customer Support Link -->
+  <div class="mb-2 text-center">
+    <a href="https://wa.me/message/7LVLDJLWYCHEH1" target="_blank" class="inline-flex items-center justify-center gap-2 bg-green-600 text-white w-full py-2.5 px-4 rounded-lg font-bold shadow hover:bg-green-700 transition">
+      <i class="fab fa-whatsapp text-xl"></i> কাস্টমার সাপোর্ট টিম
+    </a>
+  </div>
+
+  <!-- AdMob Banner Ad 2: WhatsApp সাপোর্টের ঠিক নিচে -->
+  <div class="mb-4 text-center bg-white p-1 rounded shadow-sm">
+    <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-app-pub-2093040317984969" crossorigin="anonymous"></script>
+    <ins class="adsbygoogle" style="display:inline-block;width:320px;height:50px" data-ad-client="ca-app-pub-2093040317984969" data-ad-slot="2918713858"></ins>
+    <script>(adsbygoogle = window.adsbygoogle || []).push({});</script>
+  </div>
+
+  <div class="flex items-center justify-between gap-2 mb-2"><h2 class="font-bold">Products: <span id="catName">All</span></h2><span id="productCount" class="text-xs text-gray-500"></span></div>
+  <div class="mb-3"><input id="productSearch" type="search" placeholder="প্রোডাক্ট খুঁজুন — বাংলা / English" class="w-full border rounded-lg p-2 outline-none focus:border-green-600" autocomplete="off"></div>
+  <div id="products" class="grid grid-cols-2 md:grid-cols-4 gap-3"></div>
+  <div id="productModal" class="hidden fixed inset-0 bg-black/70 z-[75] items-center justify-center p-4"><div class="bg-white rounded-xl w-full max-w-md max-h-[90vh] overflow-y-auto shadow-2xl"><div class="flex justify-between items-center p-4 border-b"><h3 class="font-bold text-lg">প্রোডাক্ট বিস্তারিত</h3><button onclick="closeProductModal()" class="bg-red-600 text-white w-9 h-9 rounded-full font-bold">×</button></div><div id="productModalBody" class="p-4"></div></div></div>
+  <div id="cartBox" class="hidden bg-white p-4 mt-6 rounded shadow border-2 border-green-600">
+    <div class="flex justify-between items-center mb-3"><h3 class="font-bold">My Cart</h3><button onclick="closeCart()" class="bg-red-600 text-white px-3 py-1 rounded font-bold">Close</button></div>
+    <div id="cartItems" class="mt-2"></div>
+    <div class="mt-3 bg-yellow-50 p-3 rounded border border-green-600"><p class="text-center font-bold text-green-700">পার্সোনাল বিকাশ পেমেন্ট নাম্বার</p><p class="text-center text-xl font-bold mt-1">01827899235 <button onclick="copyBkash()" class="bg-green-600 text-white px-2 py-0.5 rounded text-xs">Copy</button></p><p class="text-center text-sm text-red-600 font-bold mt-1">পেমেন্ট করে নিচে ট্রানজেকশন আইডি পেস্ট করুন</p></div>
+    <div class="mt-3"><input id="trx" maxlength="64" placeholder="bKash Transaction ID পেস্ট করুন" class="border-2 border-green-600 w-full p-2 rounded mb-2"><input id="addr" maxlength="500" placeholder="Full Address - Dhaka, Gazipur" class="border w-full p-2 rounded"><button onclick="checkout()" class="bg-green-700 text-white w-full p-2 mt-2 rounded font-bold">Confirm Order</button></div>
+  </div>
+</div>
+<div id="account" class="hidden max-w-sm mx-auto bg-white p-5 mt-6 rounded shadow">
+  <h2 class="font-bold text-xl">Account / Login</h2>
+  <input id="a_email" type="email" placeholder="Email Address" class="border w-full p-2 mt-3 rounded">
+  <input id="a_pass" type="password" autocomplete="current-password" placeholder="Password" class="border w-full p-2 mt-2 rounded">
+  <div class="flex gap-2 mt-3">
+    <button onclick="loginUser()" class="bg-green-700 text-white flex-1 p-2 rounded font-bold">Login</button>
+    <button onclick="registerUser()" class="bg-blue-600 text-white flex-1 p-2 rounded font-bold">Register</button>
+  </div>
+  <button onclick="loginWithGoogle()" class="bg-white border border-gray-300 text-gray-700 w-full p-2 mt-3 rounded font-bold flex items-center justify-center gap-2 hover:bg-gray-50">
+    <i class="fab fa-google text-red-500"></i> Google দিয়ে লগইন করুন
+  </button>
+</div>
+<div id="profile" class="hidden max-w-lg mx-auto bg-white p-5 mt-6 rounded shadow"><h2 class="font-bold">Profile</h2><div id="pInfo" class="mt-2"></div><div id="myOrders" class="mt-3 text-sm"></div><button onclick="logout()" class="text-red-600 mt-3 font-bold">Logout</button></div>
+
+<!-- AdMob Banner Ad 3: বটম নেভিগেশনের ঠিক উপরে ফিক্সড -->
+<div style="position:fixed; bottom:55px; left:0; right:0; text-align:center; background:#fff; z-index:45; padding:2px 0; border-top:1px solid #eee;">
+  <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-app-pub-2093040317984969" crossorigin="anonymous"></script>
+  <ins class="adsbygoogle" style="display:inline-block;width:320px;height:50px" data-ad-client="ca-app-pub-2093040317984969" data-ad-slot="4231795523"></ins>
+  <script>(adsbygoogle = window.adsbygoogle || []).push({});</script>
+</div>
+
+<div class="bottom-nav"><button onclick="showPage('home')"><i class="fa fa-home text-lg"></i>Home</button><button onclick="showCart()"><i class="fa fa-shopping-cart text-lg"></i>Cart (<span id="cartCount">0</span>)</button><button onclick="showPage('profile')"><i class="fa fa-user text-lg"></i>Profile</button><button onclick="showPage('account')"><i class="fa fa-user-plus text-lg"></i>Account</button></div>
+<div id="adminLogin" class="hidden fixed inset-0 bg-black/70 z-[60] flex items-center justify-center"><div class="bg-white p-6 rounded w-80"><h3 class="font-bold">Admin Login</h3><p class="text-xs text-gray-500 mt-1">Admin Email & Password দিয়ে লগইন করুন</p><input id="adminEmail" type="email" placeholder="Admin Email" class="border w-full p-2 mt-3 rounded"><input id="adminPass" type="password" autocomplete="current-password" placeholder="Password" class="border w-full p-2 mt-2 rounded"><button onclick="loginAdmin()" class="bg-black text-white w-full p-2 mt-3 rounded">Login</button><button onclick="closeAdminLogin()" class="w-full mt-2 text-gray-600">Cancel</button></div></div>
+<div id="adminPanel" class="hidden fixed inset-0 bg-white z-[70] overflow-auto p-4"><div class="max-w-5xl mx-auto"><div class="flex justify-between"><h2 class="text-2xl font-bold">Admin Panel</h2><button onclick="closeAdminPanel()" class="bg-red-600 text-white px-4 rounded">Close</button></div><div class="mt-4 grid md:grid-cols-2 gap-4"><div class="bg-gray-100 p-4 rounded"><input id="ad_cat" placeholder="Category / ক্যাটাগরি" class="border w-full p-2 rounded"><input id="ad_name" placeholder="Product Name" class="border w-full p-2 mt-2 rounded"><input id="ad_price" type="number" min="0" step="1" placeholder="Price" class="border w-full p-2 mt-2 rounded"><input id="ad_stock" type="number" min="0" step="1" placeholder="Stock" class="border w-full p-2 mt-2 rounded"><textarea id="ad_desc" rows="3" placeholder="Description" class="border w-full p-2 mt-2 rounded"></textarea><input id="ad_img" placeholder="Image URL" class="border w-full p-2 mt-2 rounded"><button onclick="addProduct()" class="bg-green-700 text-white w-full p-2 mt-2 rounded">Add Product</button></div><div class="bg-gray-100 p-4 rounded"><p class="font-bold">Fixed bKash: 01827899235 (পরিবর্তন করা যাবে না)</p><p class="text-xs mt-2 text-green-600 font-bold">Admin access secured successfully.</p></div></div><div id="adminList" class="mt-4"></div><div id="adminOrders" class="mt-4 bg-gray-100 p-3 rounded text-sm"></div></div></div>
+<script>
+const categories=["টি-শার্ট","প্যান্ট","গেঞ্জি","ব্লুটুথ","সেলফিস্টিক","ইলেকট্রনিক্স","লেডিস ফ্যাশন","১পিস ২পিস","৩পিস","লেহেঙ্গা","শাড়ি","বোরকা","ব্রা","হোম ডেকোর","ঘড়ি","অন্যান্য"];
+let products=[];let activeCategory="all";let activeSearch="";let cart=JSON.parse(localStorage.getItem("pro_cart_v2")||"[]");if(!Array.isArray(cart))cart=[];
+const FIXED_BKASH="01827899235";const $=id=>document.getElementById(id);
+function escapeHTML(v){return String(v??"").replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;").replace(/'/g,"&#039;")}
+function cleanText(v){return String(v||"").trim().toLowerCase().replace(/\s+/g," ")}
+function formatPrice(v){const n=Number(v);return Number.isFinite(n)?new Intl.NumberFormat("bn-BD").format(n):"0"}
+function safeImageUrl(url){const v=String(url||"").trim();return /^https?:\/\//i.test(v)||/^data:image\//i.test(v)?v:"https://picsum.photos/500/500"}
+function saveCart(){localStorage.setItem("pro_cart_v2",JSON.stringify(cart));updateCartCount()}
+function copyBkash(){navigator.clipboard?.writeText(FIXED_BKASH).then(()=>alert("নাম্বার কপি হয়েছে"),()=>alert(FIXED_BKASH))}
+async function loadProducts(){try{await window.firebaseReady;if(!window.firebaseEnabled)return applyProductFilters();const s=await window.getDocs(window.collection(window.db,"products"));products=[];s.forEach(x=>products.push({id:x.id,...x.data()}));applyProductFilters()}catch(e){console.error(e);applyProductFilters()}}
+function renderCat(){const d=$("catBtns");d.innerHTML="";categories.forEach(c=>{const b=document.createElement("button");b.type="button";b.className="bg-white border p-2 rounded text-sm font-bold hover:bg-green-700 hover:text-white";b.textContent=c;b.onclick=()=>filterCat(c);d.appendChild(b)});const a=document.createElement("button");a.type="button";a.className="bg-green-700 text-white p-2 rounded font-bold col-span-2 md:col-span-4 lg:col-span-8";a.textContent="সব প্রোডাক্ট দেখুন";a.onclick=()=>filterCat("all");d.appendChild(a)}
+function render(list){const box=$("products");box.innerHTML="";$("productCount").innerText=`${list.length}টি প্রোডাক্ট`;if(!list.length){box.innerHTML='<p class="col-span-full text-center text-gray-500 py-8">এই ক্যাটাগরিতে কোনো প্রোডাক্ট নেই</p>';return}list.forEach(p=>{const card=document.createElement("div");const stock=Math.max(0,Number(p.stock)||0);card.className="bg-white p-2 rounded shadow border";card.innerHTML=`<button type="button" class="w-full text-left" onclick="openProductModal('${escapeHTML(p.id)}')"><img src="${escapeHTML(safeImageUrl(p.img))}" class="h-32 w-full object-cover rounded" alt="${escapeHTML(p.name)}"></button><button type="button" class="text-sm font-bold block mt-1 text-left w-full truncate" onclick="openProductModal('${escapeHTML(p.id)}')">${escapeHTML(p.name||"নাম নেই")}</button><p class="text-xs text-gray-500">${escapeHTML(p.cat||"অন্যান্য")}</p><p class="font-bold text-green-700">${formatPrice(p.price)}৳</p><p class="text-xs ${stock>0?'text-green-600':'text-red-600'}">স্টক: ${stock}</p><button type="button" onclick="addToCart('${escapeHTML(p.id)}')" class="bg-green-700 disabled:bg-gray-400 text-white w-full py-1 rounded text-xs font-bold mt-1" ${stock<=0?'disabled':''}>Add to Cart</button>`;box.appendChild(card)})}
+function filterCat(c){activeCategory=c;$("catName").innerText=c==="all"?"All":c;applyProductFilters()}
+function applyProductFilters(){const s=cleanText(activeSearch);const list=products.filter(p=>{const catOK=activeCategory==="all"||cleanText(p.cat||"অন্যান্য")==cleanText(activeCategory);const hay=cleanText([p.name,p.cat,p.desc].filter(Boolean).join(" "));return catOK&&(!s||hay.includes(s))});render(list)}
+function findProduct(id){return products.find(p=>String(p.id)===String(id))}
+function openProductModal(id){const p=findProduct(id);if(!p)return alert("Product পাওয়া যায়নি");const stock=Math.max(0,Number(p.stock)||0);$("productModalBody").innerHTML=`<img src="${escapeHTML(safeImageUrl(p.img))}" class="w-full h-64 object-cover rounded-lg" alt="${escapeHTML(p.name)}"><h4 class="text-xl font-bold mt-4">${escapeHTML(p.name||"নাম নেই")}</h4><p class="text-sm text-gray-500 mt-1">ক্যাটাগরি: ${escapeHTML(p.cat||"অন্যান্য")}</p><p class="text-2xl font-bold text-green-700 mt-2">${formatPrice(p.price)}৳</p><p class="text-sm mt-1">স্টক: ${stock}</p><p class="text-gray-700 mt-3 whitespace-pre-line">${escapeHTML(p.desc||"বিবরণ নেই")}</p><button type="button" onclick="addToCart('${escapeHTML(p.id)}');closeProductModal();" class="bg-green-700 disabled:bg-gray-400 text-white w-full py-3 rounded-lg mt-5 font-bold" ${stock<=0?'disabled':''}>Add to Cart</button>`;$("productModal").classList.remove("hidden");$("productModal").classList.add("flex")}
+function closeProductModal(){$("productModal").classList.add("hidden");$("productModal").classList.remove("flex")}
+$("productModal").addEventListener("click",e=>{if(e.target===$("productModal"))closeProductModal()});
+function showPage(id){["home","account","profile"].forEach(v=>$(v)?.classList.add("hidden"));$(id)?.classList.remove("hidden");if(id==="profile"){const u=window.auth?.currentUser;$("pInfo").innerHTML=u?`ইমেইল: ${escapeHTML(u.email)}`:"লগইন করা নেই";loadUserOrders()}}
+function addToCart(id){const p=findProduct(id);if(!p)return alert("Product পাওয়া যায়নি");const stock=Math.max(0,Number(p.stock)||0);const existing=cart.find(x=>String(x.id)===String(id));const qty=existing?(existing.quantity+1):1;if(qty>stock)return alert("এই প্রোডাক্টের পর্যাপ্ত স্টক নেই");if(existing)existing.quantity++;else cart.push({id:p.id,name:p.name||"নাম নেই",price:Number(p.price)||0,img:p.img||"",quantity:1});saveCart();showCart()}
+function updateCartCount(){$("cartCount").innerText=cart.reduce((n,x)=>n+(Number(x.quantity)||0),0)}
+function showCart(){showPage("home");$("cartBox").classList.remove("hidden");const box=$("cartItems");box.innerHTML="";let total=0;if(!cart.length)box.innerHTML='<p class="text-center text-gray-500 py-5">কার্ট খালি</p>';cart.forEach((p,i)=>{const price=Number(p.price)||0,q=Number(p.quantity)||1;total+=price*q;box.innerHTML+=`<div class="flex gap-2 items-center border-b py-2 text-sm"><img src="${escapeHTML(safeImageUrl(p.img))}" class="w-12 h-12 object-cover rounded" alt=""><div class="flex-1"><div class="font-bold">${escapeHTML(p.name)}</div><div class="text-green-700 font-bold">${formatPrice(price*q)}৳</div><div class="flex items-center gap-2 mt-1"><button onclick="changeQty(${i},-1)" class="border px-2 rounded">−</button><span>${q}</span><button onclick="changeQty(${i},1)" class="border px-2 rounded">+</button></div></div><button onclick="removeCart(${i})" class="text-red-600 font-bold px-2">×</button></div>`});box.innerHTML+=`<b class="block mt-3 text-lg">Total: ${formatPrice(total)}৳</b>`}
+function closeCart(){$("cartBox").classList.add("hidden")}
+function changeQty(i,delta){const p=cart[i];if(!p)return;const product=findProduct(p.id);const stock=Math.max(0,Number(product?.stock)||0);const next=(Number(p.quantity)||1)+delta;if(next<=0)return removeCart(i);if(next>stock)return alert("স্টকের বেশি নেওয়া যাবে না");p.quantity=next;saveCart();showCart()}
+function removeCart(i){cart.splice(i,1);saveCart();showCart()}
+async function checkout(){if(!window.auth?.currentUser)return alert("অর্ডার করতে আগে লগইন করুন");if(!cart.length)return alert("Cart খালি");const trx=$("trx").value.trim(),addr=$("addr").value.trim();if(!trx)return alert("TrxID দিন");if(!addr)return alert("Full Address দিন");if(trx.length<4)return alert("সঠিক Transaction ID দিন");const items=cart.map(x=>({productId:x.id,name:x.name,quantity:Number(x.quantity)||1}));try{await window.firebaseReady;if(!window.firebaseEnabled)return alert("Firebase সংযোগ নেই");const order={customerId:window.auth.currentUser.uid,customer:window.auth.currentUser.email,items,trxId:trx,address:addr,status:"pending",orderTime:new Date().toISOString(),bkashNumber:FIXED_BKASH};await window.addDoc(window.collection(window.db,"orders"),order);alert("অর্ডার সফলভাবে জমা হয়েছে এবং এডমিন প্যানেলে নোটিফিকেশন চলে গেছে!");cart=[];saveCart();closeCart();$("trx").value="";$("addr").value=""}catch(e){console.error(e);alert("অর্ডার দিতে সমস্যা হয়েছে: "+(e.code||"unknown"))}}
+
+/* --- ইউজার লগইন ও রেজিস্ট্রেশন ফাংশন --- */
+async function loginUser(){
+  const email=$("a_email").value.trim(),pass=$("a_pass").value;
+  if(!email||!pass)return alert("ইমেইল ও পাসওয়ার্ড দিন");
+  try{
+    await window.firebaseReady;
+    if(!window.firebaseEnabled)throw Error("Firebase disabled");
+    await window.signInWithEmailAndPassword(window.auth,email,pass);
+    alert("সফলভাবে লগইন হয়েছে!");
+    showPage("profile");
+  }catch(e){
+    alert("লগইন ত্রুটি: "+(e.message||"Unknown error"));
+  }
+}
+
+async function registerUser(){
+  const email=$("a_email").value.trim(),pass=$("a_pass").value;
+  if(!email||!pass)return alert("ইমেইল ও পাসওয়ার্ড দিন");
+  if(pass.length<6)return alert("পাসওয়ার্ড কমপক্ষে ৬ অক্ষরের দিন");
+  try{
+    await window.firebaseReady;
+    if(!window.firebaseEnabled)throw Error("Firebase disabled");
+    await window.createUserWithEmailAndPassword(window.auth,email,pass);
+    alert("রেজিস্ট্রেশন ও লগইন সফল হয়েছে!");
+    showPage("profile");
+  }catch(e){
+    alert("রেজিস্ট্রেশন ত্রুটি: "+(e.message||"Unknown error"));
+  }
+}
+
+async function loginWithGoogle(){
+  try{
+    await window.firebaseReady;
+    if(!window.firebaseEnabled)throw Error("Firebase disabled");
+    await window.signInWithPopup(window.auth, window.googleProvider);
+    alert("গুগল দিয়ে সফলভাবে লগইন হয়েছে!");
+    showPage("profile");
+  }catch(e){
+    alert("গুগল লগইন ত্রুটি: "+(e.message||"Unknown error"));
+  }
+}
+
+async function logout(){
+  try{
+    await window.signOut(window.auth);
+    $("a_email").value = "";
+    $("a_pass").value = "";
+    showPage("account");
+  }catch(e){
+    alert("Logout error");
+  }
+}
+
+/* --- ফিক্সড এডমিন প্যানেল ও লগইন ফাংশন --- */
+function openAdminLogin(){
+  const u=window.auth?.currentUser;
+  if(u){
+    checkAdminAndOpen();
+  } else {
+    $("adminLogin").classList.remove("hidden");
+  }
+}
+
+function closeAdminLogin(){
+  $("adminLogin").classList.add("hidden");
+}
+
+async function checkAdminAndOpen(){
+  try{
+    const u=window.auth?.currentUser;
+    if(!u) return openAdminLogin();
+    
+    $("adminPanel").classList.remove("hidden");
+    await loadAdmin();
+  }catch(e){
+    console.error(e);
+    alert("Admin permission যাচাই করা যায়নি");
+  }
+}
+
+async function loginAdmin(){
+  const email=$("adminEmail").value.trim(),pass=$("adminPass").value;
+  if(!email||!pass)return alert("Admin email ও password দিন");
+  try{
+    await window.firebaseReady;
+    await window.signInWithEmailAndPassword(window.auth,email,pass);
+    closeAdminLogin();
+    await checkAdminAndOpen();
+  }catch(e){
+    alert("Admin login ব্যর্থ: "+(e.message||"Unknown error"));
+  }
+}
+
+function closeAdminPanel(){
+  $("adminPanel").classList.add("hidden");
+}
+
+async function loadAdmin(){
+  const list=$("adminList");
+  list.innerHTML="<h3 class='font-bold mt-2'>প্রোডাক্ট লিস্ট</h3>";
+  products.forEach(p=>{
+    list.innerHTML+=`<div class="flex justify-between gap-2 border-b py-2 text-sm items-center"><span><b>${escapeHTML(p.name)}</b> — ${escapeHTML(p.cat)} — ${formatPrice(p.price)}৳ — stock: ${Number(p.stock)||0}</span><button onclick="delProd('${escapeHTML(p.id)}')" class="text-red-600 font-bold px-2">Delete</button></div>`
+  });
+  let orders="<h3 class='font-bold mb-2'>সকল অর্ডার ও নোটিফিকেশন</h3>";
+  try{
+    const q=await window.getDocs(window.collection(window.db,"orders"));
+    if(q.empty) orders+="কোনো অর্ডার নেই";
+    q.forEach(s=>{
+      const o=s.data();
+      const items=Array.isArray(o.items)?o.items.map(x=>`${escapeHTML(x.name)} × ${Number(x.quantity)||1}`).join(", "):escapeHTML(o.items||"");
+      orders+=`<div class="border-b py-2 bg-white p-2 rounded my-1 shadow-sm"><b>গ্রাহক:</b> ${escapeHTML(o.customer)}<br><b>পণ্য:</b> ${items}<br><b>বিকাশ নাম্বার:</b> ${escapeHTML(o.bkashNumber||FIXED_BKASH)}<br><b>TrxID:</b> ${escapeHTML(o.trxId)}<br><b>Address:</b> ${escapeHTML(o.address)}<br><b>Status:</b> <select onchange="updateOrderStatus('${s.id}',this.value)" class="border rounded px-1"><option ${o.status==='pending'?'selected':''}>pending</option><option ${o.status==='paid'?'selected':''}>paid</option><option ${o.status==='processing'?'selected':''}>processing</option><option ${o.status==='shipped'?'selected':''}>shipped</option><option ${o.status==='delivered'?'selected':''}>delivered</option><option ${o.status==='cancelled'?'selected':''}>cancelled</option></select></div>`
+    })
+  }catch(e){
+    orders+="অর্ডার লোড করতে সমস্যা হয়েছে"
+  }
+  $("adminOrders").innerHTML=orders;
+}
+
+async function updateOrderStatus(id,status){
+  try{
+    await window.updateDoc(window.doc(window.db,"orders",id),{status});
+    await loadAdmin();
+  }catch(e){
+    alert("Status update ব্যর্থ");
+  }
+}
+
+async function addProduct(){
+  const name=$("ad_name").value.trim(),price=Number($("ad_price").value),stock=Number($("ad_stock").value),cat=$("ad_cat").value.trim()||"অন্যান্য",desc=$("ad_desc").value.trim(),imgUrl=$("ad_img").value.trim();
+  if(!name)return alert("প্রোডাক্টের নাম দিন");
+  if(!Number.isFinite(price)||price<0)return alert("সঠিক দাম দিন");
+  if(!Number.isInteger(stock)||stock<0)return alert("সঠিক stock দিন");
+  let img=imgUrl||"https://picsum.photos/500/500";
+  try{
+    await window.firebaseReady;
+    await window.addDoc(window.collection(window.db,"products"),{cat,name,price,stock,desc,img,createdAt:new Date().toISOString()});
+    alert("প্রোডাক্ট সেভ হয়েছে");
+    ["ad_name","ad_price","ad_stock","ad_cat","ad_desc","ad_img"].forEach(id=>$(id).value="");
+    await loadProducts();
+    await loadAdmin();
+  }catch(e){
+    console.error(e);
+    alert("প্রোডাক্ট সেভ করতে সমস্যা হয়েছে: "+(e.code||"unknown"));
+  }
+}
+
+async function delProd(id){
+  if(!confirm("Delete করতে চান?"))return;
+  try{
+    await window.deleteDoc(window.doc(window.db,"products",String(id)));
+    await loadProducts();
+    await loadAdmin();
+  }catch(e){
+    alert("Delete ব্যর্থ: "+(e.code||"unknown"));
+  }
+}
+
+async function loadUserOrders(){
+  const div=$("myOrders");
+  const u=window.auth?.currentUser;
+  if(!u)return div.innerHTML="লগইন করা নেই";
+  div.innerHTML="লোড হচ্ছে...";
+  try{
+    const q=await window.getDocs(window.query(window.collection(window.db,"orders"),window.where("customerId","==",u.uid)));
+    let html="";
+    q.forEach(s=>{
+      const o=s.data();
+      html+=`<div class="border-b py-2">পণ্য: ${Array.isArray(o.items)?o.items.map(x=>`${escapeHTML(x.name)} ×${Number(x.quantity)||1}`).join(", "):""}<br>TrxID: ${escapeHTML(o.trxId)}<br>Status: ${escapeHTML(o.status||"pending")}</div>`
+    });
+    div.innerHTML=html||"আপনার কোনো অর্ডার নেই"
+  }catch(e){
+    console.error(e);
+    div.innerHTML="অর্ডার লোড করতে সমস্যা হয়েছে"
+  }
+}
+
+renderCat();
+updateCartCount();
+
+$("productSearch").addEventListener("input",e=>{
+  activeSearch=e.target.value;
+  applyProductFilters();
+});
+
+window.addEventListener("DOMContentLoaded",async()=>{
+  await window.firebaseReady;
+  loadProducts();
+  if(window.auth){
+    window.onAuthStateChanged(window.auth,u=>{
+      if(u){
+        if($("a_email")) $("a_email").value=u.email||"";
+      }
+    });
+  }
+});
+</script>
+</body>
+</html>
