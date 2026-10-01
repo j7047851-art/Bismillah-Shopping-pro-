@@ -15,5 +15,4 @@ jobs:
         with:
           repoToken: '${{ secrets.GITHUB_TOKEN }}'
           firebaseServiceAccount: '${{ secrets.FIREBASE_SERVICE_ACCOUNT_BISMILLAH_7C65 }}'
-          channelId: live
           projectId: bismillah-7c65
