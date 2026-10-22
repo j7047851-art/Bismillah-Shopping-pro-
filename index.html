@@ -126,7 +126,7 @@ async function loadProducts() {
         
         // ফায়ারবেস Firestore থেকে ডেটা ফেচ করার কোড (আপনার প্রজেক্ট অনুযায়ী এখানে ডেটা কল হচ্ছে)
         const snapshot = await db.collection("products").get(); // অথবা আপনার যে কালেকশন নাম আছে
-        allProducts = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+        Products = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
         
         applyProductFilters();
     } catch (error) {
