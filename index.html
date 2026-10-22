@@ -115,30 +115,7 @@ function formatPrice(v){const n=Number(v);return Number.isFinite(n)?new Intl.Num
 function safeImageUrl(url){const v=String(url||"").trim();return /^https?:\/\//i.test(v)||/^data:image\//i.test(v)?v:"https://picsum.photos/500/500"}
 function saveCart(){localStorage.setItem("pro_cart_v2",JSON.stringify(cart));updateCartCount()}
 function copyBkash(){navigator.clipboard?.writeText(FIXED_BKASH).then(()=>alert("নাম্বার কপি হয়েছে"),()=>alert(FIXED_BKASH))}
-// ফায়ারবেস ও পেজ লোড হওয়ার পর যেন সাথে সাথে প্রোডাক্ট লোড হয়
-async function loadProducts() {
-    try {
-        await window.firebaseReady;
-        if (!window.firebaseEnabled) {
-            console.warn("Firebase disabled, trying local or fallback");
-            return;
-        }
-        
-        // ফায়ারবেস Firestore থেকে ডেটা ফেচ করার কোড (আপনার প্রজেক্ট অনুযায়ী এখানে ডেটা কল হচ্ছে)
-        const snapshot = await db.collection("products").get(); // অথবা আপনার যে কালেকশন নাম আছে
-      products = snapshot.docs.map(item => ({ id: item.id, ...item.data() }));
-        
-        applyProductFilters();
-    } catch (error) {
-        console.error("Error loading products:", error);
-    }
-}
-
-// অ্যাপে প্রবেশ করার সাথে সাথে (DOM সম্পূর্ণ লোড হওয়ার পর) ফাংশনটি কল করার জন্য এটি যোগ করুন:
-document.addEventListener("DOMContentLoaded", async () => {
-    await window.firebaseReady;
-    loadProducts();
-});
+async function loadProducts(){try{await window.firebaseReady;if(!window.firebaseEnabled)return applyProductFilters();const s=await window.getDocs(window.collection(window.db,"products"));products=[];s.forEach(x=>products.push({id:x.id,...x.data()}));applyProductFilters()}catch(e){console.error(e);applyProductFilters()}}
 function renderCat(){const d=$("catBtns");d.innerHTML="";categories.forEach(c=>{const b=document.createElement("button");b.type="button";b.className="bg-white border p-2 rounded text-sm font-bold hover:bg-green-700 hover:text-white";b.textContent=c;b.onclick=()=>filterCat(c);d.appendChild(b)});const a=document.createElement("button");a.type="button";a.className="bg-green-700 text-white p-2 rounded font-bold col-span-2 md:col-span-4 lg:col-span-8";a.textContent="সব প্রোডাক্ট দেখুন";a.onclick=()=>filterCat("all");d.appendChild(a)}
 function render(list){const box=$("products");box.innerHTML="";$("productCount").innerText=`${list.length}টি প্রোডাক্ট`;if(!list.length){box.innerHTML='<p class="col-span-full text-center text-gray-500 py-8">এই ক্যাটাগরিতে কোনো প্রোডাক্ট নেই</p>';return}list.forEach(p=>{const card=document.createElement("div");const stock=Math.max(0,Number(p.stock)||0);card.className="bg-white p-2 rounded shadow border";card.innerHTML=`<button type="button" class="w-full text-left" onclick="openProductModal('${escapeHTML(p.id)}')"><img src="${escapeHTML(safeImageUrl(p.img))}" class="h-32 w-full object-cover rounded" alt="${escapeHTML(p.name)}"></button><button type="button" class="text-sm font-bold block mt-1 text-left w-full truncate" onclick="openProductModal('${escapeHTML(p.id)}')">${escapeHTML(p.name||"নাম নেই")}</button><p class="text-xs text-gray-500">${escapeHTML(p.cat||"অন্যান্য")}</p><p class="font-bold text-green-700">${formatPrice(p.price)}৳</p><p class="text-xs ${stock>0?'text-green-600':'text-red-600'}">স্টক: ${stock}</p><button type="button" onclick="addToCart('${escapeHTML(p.id)}')" class="bg-green-700 disabled:bg-gray-400 text-white w-full py-1 rounded text-xs font-bold mt-1" ${stock<=0?'disabled':''}>Add to Cart</button>`;box.appendChild(card)})}
 function filterCat(c){activeCategory=c;$("catName").innerText=c==="all"?"All":c;applyProductFilters()}
@@ -354,3 +331,5 @@ window.addEventListener("DOMContentLoaded",async()=>{
 </script>
 </body>
 </html>
+ok
+gmail
