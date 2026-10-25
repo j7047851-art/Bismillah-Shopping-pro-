@@ -526,3 +526,16 @@ window.addEventListener("DOMContentLoaded", () => {
 </script>
 </body>
 </html>
+function applyProductFilters(){
+  const s = cleanText(activeSearch);
+  const list = products.filter(p => {
+    // ক্যাটাগরি মিল করার সময় স্পেস বা হাইফেনজনিত সমস্যা এড়াতে ফ্লেক্সিবল চেক করা হলো
+    const dbCat = cleanText(p.cat || "অন্যান্য").replace(/[-\s]/g, "");
+    const targetCat = cleanText(activeCategory).replace(/[-\s]/g, "");
+    const catOK = activeCategory === "all" || dbCat === targetCat;
+    
+    const hay = cleanText([p.name, p.cat, p.desc].filter(Boolean).join(" "));
+    return catOK && (!s || hay.includes(s));
+  });
+  render(list);
+}
