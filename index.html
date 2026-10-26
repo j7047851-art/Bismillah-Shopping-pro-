@@ -8,7 +8,7 @@
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 <script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
-import { getFirestore, collection, addDoc, getDocs, deleteDoc, doc, setDoc, query, where, updateDoc, orderBy, getDoc, onSnapshot, initializeFirestore, persistentLocalCache, persistentMultipleTabManager, memoryLocalCache } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
+import { getFirestore, collection, addDoc, getDocs, deleteDoc, doc, setDoc, query, where, updateDoc, orderBy, getDoc, onSnapshot, initializeFirestore, persistentLocalCache, persistentMultipleTabManager } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
 import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword, signOut, onAuthStateChanged, getIdTokenResult, GoogleAuthProvider, signInWithPopup } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
 
 const firebaseConfig = {
@@ -25,7 +25,6 @@ try {
   const app = initializeApp(firebaseConfig);
   let db;
   
-  // Incognito Mode এবং ব্রাউজার ক্যাশ সমস্যা সমাধানের জন্য ফলব্যাক লজিক
   try {
     db = initializeFirestore(app, {
       localCache: persistentLocalCache({
@@ -33,10 +32,8 @@ try {
       })
     });
   } catch (cacheErr) {
-    console.warn("Persistent cache not supported (Incognito/Private mode), falling back to memory cache:", cacheErr);
-    db = initializeFirestore(app, {
-      localCache: memoryLocalCache()
-    });
+    console.warn("Persistent Firestore cache unavailable; using default Firestore:", cacheErr);
+    db = getFirestore(app);
   }
 
   window.db = db;
@@ -173,7 +170,7 @@ body{padding-bottom:135px}button,a{touch-action:manipulation}
 
 <script>
 const categories=["টি-শার্ট","প্যান্ট","গেঞ্জি","ব্লুটুথ","সেলফিস্টিক","ইলেকট্রনিক্স","লেডিস ফ্যাশন","১পিস ২পিস","৩পিস","লেহেঙ্গা","শাড়ি","বোরকা","ব্রা","হোম ডেকোর","ঘড়ি","অন্যান্য"];
-let products=[];let activeCategory="all";let activeSearch="";let cart=JSON.parse(localStorage.getItem("pro_cart_v2")||"[]");if(!Array.isArray(cart))cart=[];
+let products=[];let activeCategory="all";let activeSearch="";let productUnsubscribe=null;let hasReceivedProductSnapshot=false;let cart=JSON.parse(localStorage.getItem("pro_cart_v2")||"[]");if(!Array.isArray(cart))cart=[];
 const FIXED_BKASH="01827899235";const $=id=>document.getElementById(id);
 function escapeHTML(v){return String(v??"").replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;").replace(/'/g,"&#039;")}
 function cleanText(v){return String(v||"").trim().toLowerCase().replace(/\s+/g," ")}
@@ -182,36 +179,66 @@ function safeImageUrl(url){const v=String(url||"").trim();return /^https?:\/\//i
 function saveCart(){localStorage.setItem("pro_cart_v2",JSON.stringify(cart));updateCartCount()}
 function copyBkash(){navigator.clipboard?.writeText(FIXED_BKASH).then(()=>alert("নাম্বার কপি হয়েছে"),()=>alert(FIXED_BKASH))}
 
+/* --- অপ্টিমাইজড Load Product ফাংশন (যেকোনো ডিভাইস ও ইনকগনিটো মোডের জন্য রিলায়েবল) --- */
 function loadProducts(){
-  $("products").innerHTML = '<p class="col-span-full text-center text-gray-500 py-8">প্রোডাক্ট লোড হচ্ছে...</p>';
-  
+  const productBox=$("products");
+  if(!hasReceivedProductSnapshot){
+    productBox.innerHTML = '<p class="col-span-full text-center text-gray-500 py-8">প্রোডাক্ট লোড হচ্ছে...</p>';
+  }
+
   window.firebaseReady.then(async (ready) => {
-    if(!ready || !window.firebaseEnabled) {
-      applyProductFilters();
+    if(!ready || !window.firebaseEnabled || !window.db) {
+      console.error("Products cannot load: Firebase is not initialized.");
+      if(!hasReceivedProductSnapshot){
+        productBox.innerHTML = '<p class="col-span-full text-center text-red-600 py-8">Firebase সংযোগ করা যাচ্ছে না। ইন্টারনেট ও Firebase সেটআপ পরীক্ষা করুন।</p>';
+      }
       return;
     }
-    
+
     try {
-      window.onSnapshot(window.collection(window.db, "products"), { includeMetadataChanges: true }, (snapshot) => {
-        products = [];
-        snapshot.forEach(docSnap => {
-          const data = docSnap.data();
-          products.push({ 
-            id: docSnap.id, 
-            ...data,
-            name: String(data.name || "").trim(),
-            cat: String(data.cat || "অন্যান্য").trim(),
-            desc: String(data.desc || "").trim()
+      if(productUnsubscribe) productUnsubscribe();
+      productUnsubscribe = window.onSnapshot(
+        window.collection(window.db, "products"),
+        (snapshot) => {
+          if(snapshot.metadata && snapshot.metadata.fromCache && snapshot.empty && products.length > 0){
+            return;
+          }
+          if(snapshot.metadata && snapshot.metadata.fromCache && snapshot.empty && !hasReceivedProductSnapshot){
+            return;
+          }
+
+          const nextProducts=[];
+          snapshot.forEach(docSnap => {
+            const data=docSnap.data() || {};
+            nextProducts.push({
+              ...data,
+              id: docSnap.id,
+              name: String(data.name || "").trim(),
+              cat: String(data.cat || "অন্যান্য").trim(),
+              desc: String(data.desc || "").trim()
+            });
           });
-        });
-        applyProductFilters();
-      }, (error) => {
-        console.error("Firestore snapshot error:", error);
-        applyProductFilters();
-      });
+          products=nextProducts;
+          hasReceivedProductSnapshot=true;
+          applyProductFilters();
+        },
+        (error) => {
+          console.error("Firestore products listener failed:", error.code || "unknown", error.message || error);
+          if(!hasReceivedProductSnapshot){
+            productBox.innerHTML = '<p class="col-span-full text-center text-red-600 py-8">প্রোডাক্ট লোড হয়নি। Firebase Console-এর Rules এবং browser console-এর error পরীক্ষা করুন।</p>';
+          }
+        }
+      );
     } catch(e) {
-      console.error("Load products error:", e);
-      applyProductFilters();
+      console.error("Load products setup error:", e.code || "unknown", e.message || e);
+      if(!hasReceivedProductSnapshot){
+        productBox.innerHTML = '<p class="col-span-full text-center text-red-600 py-8">প্রোডাক্ট লোড করা যায়নি। ইন্টারনেট সংযোগ পরীক্ষা করে আবার চেষ্টা করুন।</p>';
+      }
+    }
+  }).catch((e) => {
+    console.error("Firebase readiness check failed:", e);
+    if(!hasReceivedProductSnapshot){
+      productBox.innerHTML = '<p class="col-span-full text-center text-red-600 py-8">Firebase প্রস্তুত হয়নি। পেজটি আবার খুলুন।</p>';
     }
   });
 }
@@ -518,7 +545,7 @@ window.addEventListener("DOMContentLoaded", () => {
   if(window.auth){
     window.onAuthStateChanged(window.auth, u => {
       if(u && $("a_email")){
-        $("a_email").value = u.email || "";
+        $("a_email->value") = u.email || "";
       }
     });
   }
@@ -526,16 +553,3 @@ window.addEventListener("DOMContentLoaded", () => {
 </script>
 </body>
 </html>
-function applyProductFilters(){
-  const s = cleanText(activeSearch);
-  const list = products.filter(p => {
-    // ক্যাটাগরি মিল করার সময় স্পেস বা হাইফেনজনিত সমস্যা এড়াতে ফ্লেক্সিবল চেক করা হলো
-    const dbCat = cleanText(p.cat || "অন্যান্য").replace(/[-\s]/g, "");
-    const targetCat = cleanText(activeCategory).replace(/[-\s]/g, "");
-    const catOK = activeCategory === "all" || dbCat === targetCat;
-    
-    const hay = cleanText([p.name, p.cat, p.desc].filter(Boolean).join(" "));
-    return catOK && (!s || hay.includes(s));
-  });
-  render(list);
-}
