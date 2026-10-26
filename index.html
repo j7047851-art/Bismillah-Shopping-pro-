@@ -8,8 +8,8 @@
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 <script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
-import { getFirestore, collection, addDoc, getDocs, deleteDoc, doc, setDoc, query, where, updateDoc, orderBy, getDoc, onSnapshot, initializeFirestore, persistentLocalCache, persistentMultipleTabManager } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
-import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword, signOut, onAuthStateChanged, getIdTokenResult, GoogleAuthProvider, signInWithPopup } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
+import { getFirestore, collection, addDoc, getDocs, deleteDoc, doc, setDoc, query, where, updateDoc, orderBy, getDoc, onSnapshot, initializeFirestore, persistentLocalCache, persistentMultipleTabManager } from "https://www.gstatic.com/firebasejs/10.8.0/firestore.js";
+import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword, signOut, onAuthStateChanged, getIdTokenResult, GoogleAuthProvider, signInWithPopup } from "https://www.gstatic.com/firebasejs/10.8.0/auth.js";
 
 const firebaseConfig = {
   apiKey: "AIzaSyBX_pRUbqGszqUyaz5lOq1y4alTnadwlKU",
@@ -50,7 +50,7 @@ try {
 }
 </script>
 <style>
-.admin-dot{width:28px;height:28px;background:#111;border-radius:50%;display:flex;align-items:center;justify-content:center;color:white;font-size:11px;opacity:.35;position:fixed;top:6px;right:6px;z-index:100}
+.admin-dot{width:28px;height:28px;background:#111;border-radius:50%;display:flex;align-items:center;justify-content:center;color:white;font-size:11px;opacity:.35;position:fixed;top:6px;right:6px;z-index:60;cursor:pointer}
 .bottom-nav{position:fixed;bottom:0;left:0;right:0;background:white;border-top:1px solid #ddd;display:flex;justify-content:space-around;z-index:50;padding:8px 0}
 .bottom-nav button{flex:1;display:flex;flex-direction:column;align-items:center;font-size:11px}
 body{padding-bottom:135px}button,a{touch-action:manipulation}
@@ -73,7 +73,7 @@ body{padding-bottom:135px}button,a{touch-action:manipulation}
   
   <!-- WhatsApp Support -->
   <div class="mb-2 text-center">
-    <a href="https://wa.me/message/7LVLDJLWYCHEH1" target="_blank" class="inline-flex items-center justify-center gap-2 bg-green-600 text-white w-full py-2.5 px-4 rounded-lg font-bold shadow hover:bg-green-700 transition">
+    <a href="https://wa.me/message/7LVLDJLWYCHEH1" target="_blank" class="inline-flex items-center justify-center gap-2 bg-green-600 text-white w-full py-2.5 px-4 rounded-lg font-bold shadow hover:bg-green-700">
       <i class="fab fa-whatsapp text-xl"></i> কাস্টমার সাপোর্ট টিম
     </a>
   </div>
@@ -86,16 +86,16 @@ body{padding-bottom:135px}button,a{touch-action:manipulation}
   </div>
 
   <div class="flex items-center justify-between gap-2 mb-2"><h2 class="font-bold">Products: <span id="catName">All</span></h2><span id="productCount" class="text-xs text-gray-500"></span></div>
-  <div class="mb-3"><input id="productSearch" type="search" placeholder="প্রোডাক্ট খুঁজুন — বাংলা / English" class="w-full border rounded-lg p-2 outline-none focus:border-green-600" autocomplete="off"></div>
+  <div class="mb-3"><input id="productSearch" type="search" placeholder="প্রোডাক্ট খুঁজুন — বাংলা / English" class="w-full border rounded-lg p-2 outline-none"></div>
   <div id="products" class="grid grid-cols-2 md:grid-cols-4 gap-3"></div>
   
-  <div id="productModal" class="hidden fixed inset-0 bg-black/70 z-[75] items-center justify-center p-4"><div class="bg-white rounded-xl w-full max-w-md max-h-[90vh] overflow-y-auto shadow-2xl"><div class="flex justify-between items-center p-4 border-b"><h3 class="font-bold text-lg">প্রোডাক্ট বিস্তারিত</h3><button onclick="closeProductModal()" class="bg-red-600 text-white w-9 h-9 rounded-full font-bold">×</button></div><div id="productModalBody" class="p-4"></div></div></div>
+  <div id="productModal" class="hidden fixed inset-0 bg-black/70 z-[75] items-center justify-center p-4"><div class="bg-white rounded-xl w-full max-w-md max-h-[90vh] overflow-y-auto shadow-2xl"><div id="productModalBody"></div></div></div>
   
   <div id="cartBox" class="hidden bg-white p-4 mt-6 rounded shadow border-2 border-green-600">
     <div class="flex justify-between items-center mb-3"><h3 class="font-bold">My Cart</h3><button onclick="closeCart()" class="bg-red-600 text-white px-3 py-1 rounded font-bold">Close</button></div>
     <div id="cartItems" class="mt-2"></div>
-    <div class="mt-3 bg-yellow-50 p-3 rounded border border-green-600"><p class="text-center font-bold text-green-700">পার্সোনাল বিকাশ পেমেন্ট নাম্বার</p><p class="text-center text-xl font-bold mt-1">01827899235 <button onclick="copyBkash()" class="bg-green-600 text-white px-2 py-0.5 rounded text-xs">Copy</button></p><p class="text-center text-sm text-red-600 font-bold mt-1">পেমেন্ট করে নিচে ট্রানজেকশন আইডি পেস্ট করুন</p></div>
-    <div class="mt-3"><input id="trx" maxlength="64" placeholder="bKash Transaction ID পেস্ট করুন" class="border-2 border-green-600 w-full p-2 rounded mb-2"><input id="addr" maxlength="500" placeholder="Full Address - Dhaka, Gazipur" class="border w-full p-2 rounded"><button onclick="checkout()" class="bg-green-700 text-white w-full p-2 mt-2 rounded font-bold">Confirm Order</button></div>
+    <div class="mt-3 bg-yellow-50 p-3 rounded border border-green-600"><p class="text-center font-bold text-green-700">পার্সোনাল বিকাশ পেমেন্ট নাম্বার: <button onclick="copyBkash()" class="underline font-bold">01827899235</button></p></div>
+    <div class="mt-3"><input id="trx" maxlength="64" placeholder="bKash Transaction ID পেস্ট করুন" class="border-2 border-green-600 w-full p-2 rounded mb-2"><input id="addr" maxlength="200" placeholder="Shipping Address" class="border-2 border-green-600 w-full p-2 rounded"><button onclick="checkout()" class="bg-green-700 text-white w-full p-2 mt-3 rounded font-bold">Order Now</button></div>
   </div>
 </div>
 
@@ -112,7 +112,7 @@ body{padding-bottom:135px}button,a{touch-action:manipulation}
   </button>
 </div>
 
-<div id="profile" class="hidden max-w-lg mx-auto bg-white p-5 mt-6 rounded shadow"><h2 class="font-bold">Profile</h2><div id="pInfo" class="mt-2"></div><div id="myOrders" class="mt-3 text-sm"></div><button onclick="logout()" class="text-red-600 mt-3 font-bold">Logout</button></div>
+<div id="profile" class="hidden max-w-lg mx-auto bg-white p-5 mt-6 rounded shadow"><h2 class="font-bold">Profile</h2><div id="pInfo" class="mt-2"></div><div id="myOrders" class="mt-3 text-sm"></div></div>
 
 <!-- AdMob Banner Ad 3 -->
 <div style="position:fixed; bottom:55px; left:0; right:0; text-align:center; background:#fff; z-index:45; padding:2px 0; border-top:1px solid #eee;">
@@ -121,9 +121,9 @@ body{padding-bottom:135px}button,a{touch-action:manipulation}
   <script>(adsbygoogle = window.adsbygoogle || []).push({});</script>
 </div>
 
-<div class="bottom-nav"><button onclick="showPage('home')"><i class="fa fa-home text-lg"></i>Home</button><button onclick="showCart()"><i class="fa fa-shopping-cart text-lg"></i>Cart (<span id="cartCount">0</span>)</button><button onclick="showPage('profile')"><i class="fa fa-user text-lg"></i>Profile</button><button onclick="showPage('account')"><i class="fa fa-user-plus text-lg"></i>Account</button></div>
+<div class="bottom-nav"><button onclick="showPage('home')"><i class="fa fa-home text-lg"></i>Home</button><button onclick="showCart()"><i class="fa fa-shopping-cart text-lg"></i>Cart (<span id="cartCount">0</span>)</button><button onclick="showPage('account')"><i class="fa fa-user text-lg"></i>Account</button></div>
 
-<div id="adminLogin" class="hidden fixed inset-0 bg-black/70 z-[60] flex items-center justify-center"><div class="bg-white p-6 rounded w-80"><h3 class="font-bold">Admin Login</h3><p class="text-xs text-gray-500 mt-1">Admin Email & Password দিয়ে লগইন করুন</p><input id="adminEmail" type="email" placeholder="Admin Email" class="border w-full p-2 mt-3 rounded"><input id="adminPass" type="password" autocomplete="current-password" placeholder="Password" class="border w-full p-2 mt-2 rounded"><button onclick="loginAdmin()" class="bg-black text-white w-full p-2 mt-3 rounded">Login</button><button onclick="closeAdminLogin()" class="w-full mt-2 text-gray-600">Cancel</button></div></div>
+<div id="adminLogin" class="hidden fixed inset-0 bg-black/70 z-[60] flex items-center justify-center"><div class="bg-white p-6 rounded w-80"><h3 class="font-bold">Admin Login</h3><p class="text-xs text-gray-600 mt-2">Use admin email/password</p><input id="adminEmail" type="email" placeholder="Admin Email" class="border w-full p-2 mt-3 rounded"><input id="adminPass" type="password" placeholder="Password" class="border w-full p-2 mt-2 rounded"><button onclick="loginAdmin()" class="bg-green-700 text-white w-full p-2 mt-3 rounded font-bold">Login</button><button onclick="closeAdminLogin()" class="bg-gray-200 text-gray-700 w-full p-2 mt-2 rounded font-bold">Cancel</button></div></div>
 
 <div id="adminPanel" class="hidden fixed inset-0 bg-white z-[70] overflow-auto p-4">
   <div class="max-w-5xl mx-auto">
@@ -169,19 +169,23 @@ body{padding-bottom:135px}button,a{touch-action:manipulation}
 </div>
 
 <script>
-const categories=["টি-শার্ট","প্যান্ট","গেঞ্জি","ব্লুটুথ","সেলফিস্টিক","ইলেকট্রনিক্স","লেডিস ফ্যাশন","১পিস ২পিস","৩পিস","লেহেঙ্গা","শাড়ি","বোরকা","ব্রা","হোম ডেকোর","ঘড়ি","অন্যান্য"];
+const categories=["টি-শার্ট","প্যান্ট","গেঞ্জি","ব্লুটুথ","সেলফিস্টিক","ইলেকট্রনিক্স","লেডি ওয়্যার","অন্যান্য"];
 let products=[];let activeCategory="all";let activeSearch="";let productUnsubscribe=null;let hasReceivedProductSnapshot=false;let cart=JSON.parse(localStorage.getItem("pro_cart_v2")||"[]");if(!Array.isArray(cart))cart=[];
 const FIXED_BKASH="01827899235";const $=id=>document.getElementById(id);
-function escapeHTML(v){return String(v??"").replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;").replace(/'/g,"&#039;")}
+function escapeHTML(v){return String(v??"").replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/\"/g,"&quot;").replace(/'/g,"&#039;")}
 function cleanText(v){return String(v||"").trim().toLowerCase().replace(/\s+/g," ")}
 function formatPrice(v){const n=Number(v);return Number.isFinite(n)?new Intl.NumberFormat("bn-BD").format(n):"0"}
 function safeImageUrl(url){const v=String(url||"").trim();return /^https?:\/\//i.test(v)||/^data:image\//i.test(v)?v:"https://picsum.photos/500/500"}
 function saveCart(){localStorage.setItem("pro_cart_v2",JSON.stringify(cart));updateCartCount()}
 function copyBkash(){navigator.clipboard?.writeText(FIXED_BKASH).then(()=>alert("নাম্বার কপি হয়েছে"),()=>alert(FIXED_BKASH))}
 
-/* --- অপ্টিমাইজড Load Product ফাংশন (যেকোনো ডিভাইস ও ইনকগনিটো মোডের জন্য রিলায়েবল) --- */
 function loadProducts(){
   const productBox=$("products");
+  if(!productBox){
+    console.error("Products container not found in DOM.");
+    return;
+  }
+
   if(!hasReceivedProductSnapshot){
     productBox.innerHTML = '<p class="col-span-full text-center text-gray-500 py-8">প্রোডাক্ট লোড হচ্ছে...</p>';
   }
@@ -243,7 +247,7 @@ function loadProducts(){
   });
 }
 
-function renderCat(){const d=$("catBtns");d.innerHTML="";categories.forEach(c=>{const b=document.createElement("button");b.type="button";b.className="bg-white border p-2 rounded text-sm font-bold hover:bg-green-700 hover:text-white";b.textContent=c;b.onclick=()=>filterCat(c);d.appendChild(b)});const a=document.createElement("button");a.type="button";a.className="bg-green-700 text-white p-2 rounded font-bold col-span-2 md:col-span-4 lg:col-span-8";a.textContent="সব প্রোডাক্ট দেখুন";a.onclick=()=>filterCat("all");d.appendChild(a)}
+function renderCat(){const d=$("catBtns");d.innerHTML="";categories.forEach(c=>{const b=document.createElement("button");b.type="button";b.className="bg-white border p-2 rounded text-sm font-bold transition hover:bg-green-50";b.textContent=c;b.onclick=()=>filterCat(c);d.appendChild(b);});}
 
 function render(list){
   const box=$("products");
@@ -259,7 +263,7 @@ function render(list){
     const card=document.createElement("div");
     const stock=Math.max(0,Number(p.stock)||0);
     card.className="bg-white p-2 rounded shadow border";
-    card.innerHTML=`<button type="button" class="w-full text-left" onclick="openProductModal('${escapeHTML(p.id)}')"><img src="${escapeHTML(safeImageUrl(p.img))}" class="h-32 w-full object-cover rounded" alt="${escapeHTML(p.name)}"></button><button type="button" class="text-sm font-bold block mt-1 text-left w-full truncate" onclick="openProductModal('${escapeHTML(p.id)}')">${escapeHTML(p.name||"নাম নেই")}</button><p class="text-xs text-gray-500">${escapeHTML(p.cat||"অন্যান্য")}</p><p class="font-bold text-green-700">${formatPrice(p.price)}৳</p><p class="text-xs ${stock>0?'text-green-600':'text-red-600'}">স্টক: ${stock}</p><button type="button" onclick="addToCart('${escapeHTML(p.id)}')" class="bg-green-700 disabled:bg-gray-400 text-white w-full py-1 rounded text-xs font-bold mt-1" ${stock<=0?'disabled':''}>Add to Cart</button>`;
+    card.innerHTML=`<button type="button" class="w-full text-left" onclick="openProductModal('${escapeHTML(p.id)}')"><img src="${escapeHTML(safeImageUrl(p.img))}" class="h-32 w-full object-cover rounded-md" alt="${escapeHTML(p.name)}"><div class="mt-2"><div class="flex justify-between items-center"><h3 class="font-bold text-sm line-clamp-2">${escapeHTML(p.name)}</h3><span class="text-xs bg-green-100 text-green-700 px-2 py-0.5 rounded">${stock ? 'স্টক আছে' : 'স্টক নেই'}</span></div><p class="text-xs text-gray-500 mt-1">${escapeHTML(p.cat || 'অন্যান্য')}</p><p class="font-bold text-green-700 mt-1">${formatPrice(p.price || 0)}৳</p></div></button>`;
     box.appendChild(card);
   });
 }
@@ -282,7 +286,7 @@ function openProductModal(id){
   const p=findProduct(id);
   if(!p)return alert("Product পাওয়া যায়নি");
   const stock=Math.max(0,Number(p.stock)||0);
-  $("productModalBody").innerHTML=`<img src="${escapeHTML(safeImageUrl(p.img))}" class="w-full h-64 object-cover rounded-lg" alt="${escapeHTML(p.name)}"><h4 class="text-xl font-bold mt-4">${escapeHTML(p.name||"নাম নেই")}</h4><p class="text-sm text-gray-500 mt-1">ক্যাটাগরি: ${escapeHTML(p.cat||"অন্যান্য")}</p><p class="text-2xl font-bold text-green-700 mt-2">${formatPrice(p.price)}৳</p><p class="text-sm mt-1">স্টক: ${stock}</p><p class="text-gray-700 mt-3 whitespace-pre-line">${escapeHTML(p.desc||"বিবরণ নেই")}</p><button type="button" onclick="addToCart('${escapeHTML(p.id)}');closeProductModal();" class="bg-green-700 disabled:bg-gray-400 text-white w-full py-3 rounded-lg mt-5 font-bold" ${stock<=0?'disabled':''}>Add to Cart</button>`;
+  $("productModalBody").innerHTML=`<img src="${escapeHTML(safeImageUrl(p.img))}" class="w-full h-64 object-cover rounded-lg" alt="${escapeHTML(p.name)}"><h4 class="text-xl font-bold mt-4">${escapeHTML(p.name)}</h4><p class="text-sm text-gray-600 mt-2">${escapeHTML(p.cat || 'অন্যান্য')}</p><p class="text-2xl font-bold text-green-700 mt-3">${formatPrice(p.price || 0)}৳</p><p class="mt-3 text-sm text-gray-700">${escapeHTML(p.desc || 'কোনো বিবরণ নেই')}</p><p class="mt-2 text-xs ${stock ? 'text-green-600' : 'text-red-600'} font-bold">${stock ? `স্টক আছে (${stock})` : 'স্টক নেই'}</p><div class="mt-4 flex gap-2"><button onclick="addToCart('${escapeHTML(p.id)}')" class="flex-1 bg-green-700 text-white px-4 py-2 rounded font-bold">কার্টে যোগ করুন</button><button onclick="closeProductModal()" class="flex-1 bg-gray-200 text-gray-800 px-4 py-2 rounded font-bold">বন্ধ করুন</button></div>`;
   $("productModal").classList.remove("hidden");
   $("productModal").classList.add("flex");
 }
@@ -290,7 +294,7 @@ function openProductModal(id){
 function closeProductModal(){$("productModal").classList.add("hidden");$("productModal").classList.remove("flex")}
 $("productModal").addEventListener("click",e=>{if(e.target===$("productModal"))closeProductModal()});
 
-function showPage(id){["home","account","profile"].forEach(v=>$(v)?.classList.add("hidden"));$(id)?.classList.remove("hidden");if(id==="profile"){const u=window.auth?.currentUser;$("pInfo").innerHTML=u?`ইমেইল: ${escapeHTML(u.email)}`:"লগইন করা নেই";loadUserOrders()}}
+function showPage(id){["home","account","profile"].forEach(v=>$(v)?.classList.add("hidden"));$(id)?.classList.remove("hidden");if(id==="profile"){const u=window.auth?.currentUser;$("pInfo").innerHTML=u?`<b>${escapeHTML(u.email || 'User')}</b><button onclick="logout()" class="ml-3 bg-red-600 text-white px-3 py-1 rounded text-xs">Logout</button>`:"<p>লগইন করা নেই</p>";loadUserOrders();}}
 
 function addToCart(id){
   const p=findProduct(id);
@@ -317,13 +321,13 @@ function showCart(){
   cart.forEach((p,i)=>{
     const price=Number(p.price)||0,q=Number(p.quantity)||1;
     total+=price*q;
-    box.innerHTML+=`<div class="flex gap-2 items-center border-b py-2 text-sm"><img src="${escapeHTML(safeImageUrl(p.img))}" class="w-12 h-12 object-cover rounded" alt=""><div class="flex-1"><div class="font-bold">${escapeHTML(p.name)}</div><div class="text-green-700 font-bold">${formatPrice(price*q)}৳</div><div class="flex items-center gap-2 mt-1"><button onclick="changeQty(${i},-1)" class="border px-2 rounded">−</button><span>${q}</span><button onclick="changeQty(${i},1)" class="border px-2 rounded">+</button></div></div><button onclick="removeCart(${i})" class="text-red-600 font-bold px-2">×</button></div>`;
+    box.innerHTML+=`<div class="flex gap-2 items-center border-b py-2 text-sm"><img src="${escapeHTML(safeImageUrl(p.img))}" class="w-12 h-12 object-cover rounded" alt=""><div class="flex-1"><div class="font-bold">${escapeHTML(p.name)}</div><div class="text-xs text-gray-500">${formatPrice(price)}৳ × ${q}</div></div><div class="flex items-center gap-2"><button onclick="changeQty(${i},-1)" class="bg-gray-200 px-2 rounded">-</button><span>${q}</span><button onclick="changeQty(${i},1)" class="bg-gray-200 px-2 rounded">+</button></div></div>`;
   });
   box.innerHTML+=`<b class="block mt-3 text-lg">Total: ${formatPrice(total)}৳</b>`;
 }
 
 function closeCart(){$("cartBox").classList.add("hidden")}
-function changeQty(i,delta){const p=cart[i];if(!p)return;const product=findProduct(p.id);const stock=Math.max(0,Number(product?.stock)||0);const next=(Number(p.quantity)||1)+delta;if(next<=0)return removeCart(i);if(next>stock)return alert("স্টকের বেশি নেওয়া যাবে না");p.quantity=next;saveCart();showCart()}
+function changeQty(i,delta){const p=cart[i];if(!p)return;const product=findProduct(p.id);const stock=Math.max(0,Number(product?.stock)||0);const next=(Number(p.quantity)||1)+delta;if(next<=0)return removeCart(i);if(next>stock)return alert("স্টক সীমা অতিক্রম করেছে");p.quantity=next;saveCart();showCart()}
 function removeCart(i){cart.splice(i,1);saveCart();showCart()}
 
 async function checkout(){
@@ -452,7 +456,7 @@ async function loadAdmin(){
   const list=$("adminList");
   list.innerHTML="<h3 class='font-bold mb-2 text-base border-b pb-1'>প্রোডাক্ট লিস্ট</h3>";
   products.forEach(p=>{
-    list.innerHTML+=`<div class="flex justify-between gap-2 border-b py-2 text-sm items-center bg-white p-2 rounded mb-1 shadow-sm"><span><b>${escapeHTML(p.name)}</b> — ${escapeHTML(p.cat)} — ${formatPrice(p.price)}৳ — stock: ${Number(p.stock)||0}</span><button onclick="delProd('${escapeHTML(p.id)}')" class="text-red-600 font-bold px-2">Delete</button></div>`;
+    list.innerHTML+=`<div class="flex justify-between gap-2 border-b py-2 text-sm items-center bg-white p-2 rounded mb-1 shadow-sm"><span><b>${escapeHTML(p.name)}</b> — ${escapeHTML(p.cat)} — ${formatPrice(p.price || 0)}৳</span><button onclick="delProd('${escapeHTML(p.id)}')" class="bg-red-600 text-white px-2 py-1 rounded text-xs">Delete</button></div>`;
   });
   let orders="<h3 class='font-bold mb-2 text-base border-b pb-1 text-blue-800'>সকল অর্ডার ও নোটিফিকেশন</h3>";
   try{
@@ -461,10 +465,10 @@ async function loadAdmin(){
     q.forEach(s=>{
       const o=s.data();
       const items=Array.isArray(o.items)?o.items.map(x=>`${escapeHTML(x.name)} × ${Number(x.quantity)||1}`).join(", "):escapeHTML(o.items||"");
-      orders+=`<div class="border-b py-2 bg-white p-3 rounded my-2 shadow-sm border-l-4 border-blue-600"><b>গ্রাহক:</b> ${escapeHTML(o.customer)}<br><b>পণ্য:</b> ${items}<br><b>বিকাশ নাম্বার:</b> ${escapeHTML(o.bkashNumber||FIXED_BKASH)}<br><b>TrxID:</b> ${escapeHTML(o.trxId)}<br><b>Address:</b> ${escapeHTML(o.address)}<br><div class="mt-2 flex items-center gap-2"><b>Status:</b> <select onchange="updateOrderStatus('${s.id}',this.value)" class="border rounded px-2 py-1 font-semibold bg-gray-50"><option ${o.status==='pending'?'selected':''}>pending</option><option ${o.status==='paid'?'selected':''}>paid</option><option ${o.status==='processing'?'selected':''}>processing</option><option ${o.status==='shipped'?'selected':''}>shipped</option><option ${o.status==='delivered'?'selected':''}>delivered</option><option ${o.status==='cancelled'?'selected':''}>cancelled</option></select></div></div>`;
+      orders+=`<div class="border-b py-2 bg-white p-3 rounded my-2 shadow-sm border-l-4 border-blue-600"><b>গ্রাহক:</b> ${escapeHTML(o.customer)}<br><b>পণ্য:</b> ${items}<br><b>ট্রাঞ্জেশন:</b> ${escapeHTML(o.trxId)}<br><b>স্ট্যাটাস:</b> <select onchange="updateOrderStatus('${escapeHTML(s.id)}', this.value)"><option value="pending" ${o.status==='pending'?'selected':''}>Pending</option><option value="confirmed" ${o.status==='confirmed'?'selected':''}>Confirmed</option><option value="cancelled" ${o.status==='cancelled'?'selected':''}>Cancelled</option></select></div>`;
     });
   }catch(e){
-    orders+="<p class='text-red-600 py-2'>অর্ডার লোড করতে সমস্যা হয়েছে</p>";
+    orders+="<p class='text-red-600 py-2'>অ���্ডার লোড করতে সমস্যা হয়েছে</p>";
   }
   $("adminOrders").innerHTML=orders;
 }
@@ -522,7 +526,7 @@ async function loadUserOrders(){
     let html="";
     q.forEach(s=>{
       const o=s.data();
-      html+=`<div class="border-b py-2">পণ্য: ${Array.isArray(o.items)?o.items.map(x=>`${escapeHTML(x.name)} ×${Number(x.quantity)||1}`).join(", "):""}<br>TrxID: ${escapeHTML(o.trxId)}<br>Status: ${escapeHTML(o.status||"pending")}</div>`;
+      html+=`<div class="border-b py-2">পণ্য: ${Array.isArray(o.items)?o.items.map(x=>`${escapeHTML(x.name)} ×${Number(x.quantity)||1}`).join(", "):""}<br>TrxID: ${escapeHTML(o.trxId)}<br>স্ট্যাটাস: ${escapeHTML(o.status||'pending')}</div>`;
     });
     div.innerHTML=html||"আপনার কোনো অর্ডার নেই";
   }catch(e){
@@ -543,11 +547,15 @@ window.addEventListener("DOMContentLoaded", () => {
   loadProducts();
   
   if(window.auth){
-    window.onAuthStateChanged(window.auth, u => {
-      if(u && $("a_email")){
-        $("a_email->value") = u.email || "";
-      }
-    });
+    try {
+      window.onAuthStateChanged(window.auth, u => {
+        if(u && $("a_email")) {
+          $("a_email").value = u.email || "";
+        }
+      });
+    } catch (err) {
+      console.error("Auth state listener failed:", err);
+    }
   }
 });
 </script>
